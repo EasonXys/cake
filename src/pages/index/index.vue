@@ -28,28 +28,26 @@
     <view :class="isLight ? 'clock' : 'blessing'">
       <!-- {{ clock }} -->
     </view>
+    <view class="face-marks__container">
+      <p>{{ 'leftPoint left ' + showPosition(leftPoint) }}</p>
+      <p>{{ 'rightPoint right ' + showPosition(rightPoint) }}</p>
+      <p>{{ 'width ' + getDistanc(leftPoint, rightPoint) }}</p>
+
+      <p>{{ 'upPoint up ' + showPosition(upPoint) }}</p>
+      <p>{{ 'downPoint down ' + showPosition(downPoint) }}</p>
+      <p>{{ 'height ' + getDistanc(upPoint, downPoint) }}</p>
+      <p>{{ 'mouthRatio ' + mouthRatio }}
+      </p>
+
+      <view @click="handleReset" :style="{ background: '#fff' }">再来一次</view>
+      <video class="face-marks__video" autoplay muted playsinline></video>
+      <canvas class="face-marks__canvas" id="canvas"></canvas>
+    </view>
   </view>
-
-  <!-- <view class="face-marks__container">
-    <p>{{ 'Point60 left ' + showPosition(point60) }}</p>
-    <p>{{ 'Point64 right ' + showPosition(point64) }}</p>
-    <p>{{ 'width ' + getDistanc(point60, point64) }}</p>
-
-    <p>{{ 'Point62 up ' + showPosition(point62) }}</p>
-    <p>{{ 'Point66 down ' + showPosition(point66) }}</p>
-    <p>{{ 'height ' + getDistanc(point62, point66) }}</p>
-    <p>{{ 'weight/height ' + (Number(getDistanc(point60, point64)) / Number(getDistanc(point62, point66))).toFixed(2) }}
-    </p>
-
-
-    <video class="face-marks__video" autoplay muted playsinline></video>
-    <switch checked @change="handleCameraOnOff" />
-    <canvas class="face-marks__canvas" id="canvas"></canvas>
-  </view> -->
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import * as faceapi from 'face-api.js'
 import { onBeforeUnmount } from 'vue';
 
@@ -57,13 +55,19 @@ import { onBeforeUnmount } from 'vue';
 let timer: NodeJS.Timer
 let count = 0
 let cam = null as unknown as HTMLVideoElement
-let isLight = ref(false)
+let isLight = ref(true)
+let arr = Array(6).fill(0)
 
 
-const point60 = ref(null as unknown as faceapi.Point);
-const point64 = ref(null as unknown as faceapi.Point);
-const point62 = ref(null as unknown as faceapi.Point);
-const point66 = ref(null as unknown as faceapi.Point);
+const leftPoint = ref(null as unknown as faceapi.Point);
+const rightPoint = ref(null as unknown as faceapi.Point);
+const upPoint = ref(null as unknown as faceapi.Point);
+const downPoint = ref(null as unknown as faceapi.Point);
+
+const mouthRatio = computed(() => {
+  if (!upPoint.value?.x) return 0
+  return Math.floor(Number(getDistanc(leftPoint.value, rightPoint.value)) / Number(getDistanc(upPoint.value, downPoint.value)))
+})
 
 const title = ref('Hello')
 const imgInput = ref()
@@ -93,6 +97,11 @@ faceapi.env.monkeyPatch({
 const handleCameraOnOff = async (e: any) => {
   initCamera(e.detail.value)
 }
+
+const handleReset = () => {
+  isLight.value = true;
+  loopJudge()
+}
 const loadNet = async () => {
   try {
     await Promise.all([
@@ -107,7 +116,7 @@ const loadNet = async () => {
 
 };
 
-const initCamera = async (isOn = true, width = 800, height = 600): Promise<HTMLVideoElement> => {
+const initCamera = async (isCameraOn = true, width = 800, height = 600): Promise<HTMLVideoElement> => {
   const video = document.getElementsByTagName('video')[0] as HTMLVideoElement
   video.width = width;
   video.height = height;
@@ -124,7 +133,7 @@ const initCamera = async (isOn = true, width = 800, height = 600): Promise<HTMLV
   // 获取视频轨道
   const videoTrack = stream.getVideoTracks()[0];
   // 关闭摄像头
-  if (!isOn) {
+  if (!isCameraOn) {
     videoTrack.stop();
   }
 
@@ -149,59 +158,77 @@ const detectLandmarks = async () => {
   }
 };
 
-// const initFace = async () => {
-//   console.log('loadnet初始化')
-//   await loadNet()
-//   console.log('loadnet完毕')
-//   cam = await initCamera()
-//   console.log('相机初始化完毕')
-//   // await detectLandmarks();
-//   cam.addEventListener('play', () => {
-//     console.log('hello')
-//     const canvas = document.getElementsByTagName('canvas')[0]
-//     canvas.width = 800
-//     canvas.height = 600
-//     const videoEl = document.getElementsByTagName('video')[0]
-//     console.log(canvas)
-//     const ctx = canvas.getContext('2d');
-//     timer = setInterval(async () => {
-//       count++
-//       try {
-//         // const detections = await faceapi.detectAllFaces(cam, faceapiOptions)
-//         const detections = await faceapi.detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
-//         if (!detections[0]) {
-//           console.log('no face...')
-//           return
-//         }
-//         console.log('facing')
-//         const landmarks = detections[0].landmarks
-//         const pointsArr = landmarks._positions as faceapi.Point[]
+const loopJudge = () => {
+  // console.log('hello')
+  // const canvas = document.getElementsByTagName('canvas')[0]
+  // canvas.width = 800
+  // canvas.height = 600
+  // const videoEl = document.getElementsByTagName('video')[0]
+  // console.log(canvas)
+  // const ctx = canvas.getContext('2d');
+  timer && clearInterval(timer)
+  timer = setInterval(async () => {
+    count++
+    try {
+      // const detections = await faceapi.detectAllFaces(cam, faceapiOptions)
+      const detections = await faceapi.detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+      if (!detections[0]) {
+        console.log('no face...')
+        return
+      }
+      console.log('facing')
+      const landmarks = detections[0].landmarks
+      const pointsArr = landmarks._positions as faceapi.Point[]
 
-//         // if (count % 5 === 0) {
-//         point60.value = pointsArr[60] // left
-//         point64.value = pointsArr[64] // right
-//         point62.value = pointsArr[62] // up
-//         point66.value = pointsArr[66] // down
-//         // }
-//         // console.log(detections[0].landmarks._positions)
-//         const dims = faceapi.matchDimensions(canvas, videoEl, true)
-//         console.log(dims)
-//         const resizedDetections = faceapi.resizeResults(detections, dims);
+      // if (count % 5 === 0) {
+      leftPoint.value = pointsArr[60] // left
+      rightPoint.value = pointsArr[64] // right
+      upPoint.value = pointsArr[62] // up
+      downPoint.value = pointsArr[66] // down
+
+      const val = (mouthRatio.value <= 6 && mouthRatio.value >= 3) ? 1 : 0
+      arr.shift()
+      arr.push(val)
+      console.table(arr)
+
+      const isBlowing = arr.reduce((pre, cur) => {
+        return cur & pre
+      }, 1)
+      if (isBlowing) {
+        clearInterval(timer)
+        isLight.value = false;
+      }
+      console.table(arr)
+      console.log(isBlowing)
+
+      // }
+      // console.log(detections[0].landmarks._positions)
+      // const dims = faceapi.matchDimensions(canvas, videoEl, true)
+      // console.log(dims)
+      // const resizedDetections = faceapi.resizeResults(detections, dims);
 
 
-//         ctx && ctx.translate(-100, -1 * videoEl.offsetHeight);
-//         faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+      // ctx && ctx.translate(-100, -1 * videoEl.offsetHeight);
+      // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
 
-//       } catch (error) {
-//         console.error(error)
-//       }
-//     }, 100);
-//   });
-// }
+    } catch (error) {
+      console.error(error)
+    }
+  }, 100);
+}
+const initFace = async () => {
+  console.log('loadnet初始化')
+  await loadNet()
+  console.log('loadnet完毕')
+  cam = await initCamera()
+  console.log('相机初始化完毕')
+  // await detectLandmarks();
+  cam.addEventListener('play', loopJudge);
+}
 
 
 onMounted(async () => {
-  // await initFace()
+  await initFace()
 
 
 
@@ -224,21 +251,22 @@ onBeforeUnmount(() => {
 
 .face-marks {
   &__container {
+    outline: 1px solid;
+    width: 600rpx;
+    height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
-    // p{
-
-    // }
-
+    position: fixed;
+    top: 50rpx;
+    left: 300rpx;
   }
 
   &__video,
   &__canvas {
     position: absolute;
-    top: 160px;
+    top: 210px;
     width: 800rpx;
     height: 600rpx;
   }
