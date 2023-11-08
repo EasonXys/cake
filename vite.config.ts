@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import path, { resolve } from 'path'
 import uni from "@dcloudio/vite-plugin-uni";
 // import sass from 'vite-plugin-sass'
+import nodeResolve from '@rollup/plugin-node-resolve';
 
 const PORT = 8080
 
@@ -41,8 +42,16 @@ export default defineConfig({
       output: {
         chunkFileNames: "static/js/[name]-[hash].js",
         entryFileNames: "static/js/[name]-[hash].js",
-        assetFileNames: "static/[ext]/[name]-[hash].[ext]"
-      }
+        assetFileNames: "static/[ext]/[name]-[hash].[ext]",
+      },
+      plugins: [
+        nodeResolve({
+          extensions: ['.mp3', '.json', '.shard'],
+          alias: {
+            'src': resolve(__dirname, 'src')
+          }
+        })
+      ]
     }
   },
   server: {

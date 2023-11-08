@@ -74,9 +74,9 @@ const handleReset = () => {
 const loadNet = async () => {
   try {
     await Promise.all([
-      faceapi.nets.ssdMobilenetv1.loadFromUri('public/models'),
-      faceapi.nets.faceLandmark68Net.loadFromUri('public/models'),
-      faceapi.nets.tinyFaceDetector.loadFromUri('public/models'),
+      faceapi.nets.ssdMobilenetv1.loadFromUri('/public/models'),
+      faceapi.nets.faceLandmark68Net.loadFromUri('/public/models'),
+      faceapi.nets.tinyFaceDetector.loadFromUri('/public/models'),
     ])
   }
   catch (error) {

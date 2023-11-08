@@ -32,7 +32,7 @@
 </template>
 
 <script lang="ts" setup>
-import { defineProps, ref } from "vue"
+// import { defineProps, ref } from "vue"
 interface IProps {
   isLight: boolean
 }
