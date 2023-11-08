@@ -25,37 +25,21 @@
       <view class="cream"></view>
       <view class="bread"></view>
     </view>
-    <view :class="props.isLight ? 'clock' : 'blessing'">
-      {{ content }}
+    <view :class="[props.isLight ? '' : 'blessing']">
+      {{ isLight ? '' : '生日快乐' }}
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
-import { defineProps, watch, ref } from "vue"
+import { defineProps, ref } from "vue"
 interface IProps {
   isLight: boolean
 }
 const props = withDefaults(defineProps<IProps>(), {
   isLight: true
 })
-let timer: NodeJS.Timer
-const content = ref('')
 
-watch(() => props.isLight, (newVal) => {
-
-  if (newVal) {
-    timer = setInterval(() => {
-      const { getHours, getMinutes, getSeconds } = new Date()
-      content.value = `${getHours()}:${getMinutes()}:${getSeconds}`
-    }, 1000)
-
-  } else {
-    clearInterval(timer)
-    content.value = '生日快乐'
-
-  }
-})
 
 </script>
 
