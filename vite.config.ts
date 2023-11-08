@@ -10,6 +10,12 @@ const pathResolve = (dir: string): string => {
   return resolve(__dirname, ".", dir);
 };
 
+let publicPath = './'
+const BUILD_ENV = process.env.BUILD_ENV;
+if (BUILD_ENV === 'prod') {
+  publicPath = '//easonxys.github.io/cake'
+}
+console.log(BUILD_ENV)
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -21,7 +27,7 @@ export default defineConfig({
   //     }
   //   }
   // },
-  base: '/',
+  base: publicPath,
   build: {
     sourcemap: false,
     // 消除打包大小超过500kb警告
