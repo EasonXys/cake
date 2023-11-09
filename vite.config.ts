@@ -40,16 +40,15 @@ export default defineConfig({
       },
       // 静态资源分类打包
       output: {
-        chunkFileNames: "static/js/[name]-[hash].js",
-        entryFileNames: "static/js/[name]-[hash].js",
-        assetFileNames: "static/[ext]/[name]-[hash].[ext]",
+        chunkFileNames: "src/static/js/[name]-[hash].js",
+        entryFileNames: "src/static/js/[name]-[hash].js",
+        assetFileNames: "src/static/[ext]/[name]-[hash].[ext]",
       },
       plugins: [
         nodeResolve({
-          extensions: ['.mp3', '.json', '.shard'],
-          alias: {
-            'src': resolve(__dirname, 'src')
-          }
+          extensions: ['.json', '.shard'],
+          rootDir: path.join(process.cwd(), './src/static/models')
+
         })
       ]
     }

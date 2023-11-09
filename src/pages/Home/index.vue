@@ -16,11 +16,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
-
+import audioSrc from '../../../public/music/birthday.mp3'
 import * as faceapi from 'face-api.js'
 import type { Point } from 'face-api.js'
 import Cake from '../../components/Cake/index.vue'
 
+const modelsSrc = '/src/static/models'
 
 let timer = null as unknown as NodeJS.Timer
 let cam = null as unknown as HTMLVideoElement
@@ -74,9 +75,9 @@ const handleReset = () => {
 const loadNet = async () => {
   try {
     await Promise.all([
-      faceapi.nets.ssdMobilenetv1.loadFromUri('/public/models'),
-      faceapi.nets.faceLandmark68Net.loadFromUri('/public/models'),
-      faceapi.nets.tinyFaceDetector.loadFromUri('/public/models'),
+      faceapi.nets.ssdMobilenetv1.loadFromUri(modelsSrc),
+      faceapi.nets.faceLandmark68Net.loadFromUri(modelsSrc),
+      faceapi.nets.tinyFaceDetector.loadFromUri(modelsSrc),
     ])
   }
   catch (error) {
@@ -176,7 +177,7 @@ const initFace = async () => {
 
 onMounted(() => {
   initFace()
-  audio.value = new Audio('/public/music/birthday.mp3')
+  audio.value = new Audio(audioSrc)
 })
 onBeforeUnmount(() => {
   clearInterval(timer)
