@@ -21,7 +21,7 @@ import * as faceapi from 'face-api.js'
 import type { Point } from 'face-api.js'
 import Cake from '../../components/Cake/index.vue'
 
-const modelsSrc = '/src/static/models'
+const modelsSrc = './static/models'
 
 let timer = null as unknown as NodeJS.Timer
 let cam = null as unknown as HTMLVideoElement
