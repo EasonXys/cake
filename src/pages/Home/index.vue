@@ -7,29 +7,29 @@
       transform: isLight ? '' : 'rotate(10deg)',
       opacity: isLight ? '1' : '0.5',
       boxShadow: isLight ? '0 4px 8px rgba(0, 0, 0, 0.5)' : ''
-
-    }">{{
-  displayText }}</view>
+    }">{{ displayText }}</view>
     <video class="face-marks__video" autoplay muted playsinline controls="false"></video>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
-import audioSrc from '../../../public/music/birthday.mp3'
 import * as faceapi from 'face-api.js'
 import type { Point } from 'face-api.js'
+import audioSrc from '../../../public/music/birthday.mp3'
 import Cake from '../../components/Cake/index.vue'
 
 const modelsSrc = './static/models'
 
 let timer = null as unknown as NodeJS.Timer
 let cam = null as unknown as HTMLVideoElement
-const isLight = ref(true)
-const audio = ref(null as unknown as HTMLAudioElement)
 let arr = Array(3).fill(0)
 
+const isLight = ref(true)
 const mouthRatio = ref(-1)
+const isReady = ref(false)
+const audio = ref(null as unknown as HTMLAudioElement)
+
 
 const displayText = computed(() => {
   if (!isReady.value) return ''
@@ -42,29 +42,10 @@ const getMouthRatio = (pointObj: Record<string, Point>) => {
   return Math.floor(Number(getDistanc(leftPoint, rightPoint)) / Number(getDistanc(upPoint, downPoint)))
 }
 
-const isCameraOn = ref(true)
-const isReady = ref(false)
-
-const minConfidence = 0.3;
-const faceapiOptions = new faceapi.SsdMobilenetv1Options({ minConfidence });
 const getDistanc = (a: Omit<faceapi.Point, '_x' | '_y'>, b: Omit<faceapi.Point, '_x' | '_y'>) => {
   if (!a || !b) return 0
   return Math.sqrt(Math.abs(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2))).toFixed(2)
 }
-// const showPosition = (p: Omit<faceapi.Point, '_x' | '_y'>) => {
-//   if (!p) return ''
-//   return `x: ${p.x.toFixed(2)}, y: ${p.y.toFixed(2)}`
-// }
-
-faceapi.env.monkeyPatch({
-  Canvas: HTMLCanvasElement,
-  Image: HTMLImageElement,
-  ImageData: ImageData,
-  Video: HTMLVideoElement,
-  createCanvasElement: () => document.createElement('canvas'),
-  createImageElement: () => document.createElement('img')
-});
-
 
 const handleReset = () => {
   if (isLight.value) return
@@ -75,7 +56,6 @@ const handleReset = () => {
 const loadNet = async () => {
   try {
     await Promise.all([
-      faceapi.nets.ssdMobilenetv1.loadFromUri(modelsSrc),
       faceapi.nets.faceLandmark68Net.loadFromUri(modelsSrc),
       faceapi.nets.tinyFaceDetector.loadFromUri(modelsSrc),
     ])
@@ -83,7 +63,6 @@ const loadNet = async () => {
   catch (error) {
     console.error(error)
   }
-
 };
 
 const initCamera = async (isCameraOn = true, width = 800, height = 600): Promise<HTMLVideoElement> => {
@@ -115,24 +94,14 @@ const initCamera = async (isCameraOn = true, width = 800, height = 600): Promise
     };
   });
 }
-const detectLandmarks = async () => {
-
-  try {
-    let result = await faceapi.detectSingleFace(cam, faceapiOptions)
-      .withFaceLandmarks()
-
-    detectLandmarks()
-  } catch (error) {
-    console.error(error)
-  }
-};
 
 const loopJudge = () => {
-
+  let count = 0
   timer && clearInterval(timer)
   timer = setInterval(async () => {
+    count++
+    if (count <= 10) return
     try {
-      // const detections = await faceapi.detectAllFaces(cam, faceapiOptions)
       const detections = await faceapi.detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
       if (!detections[0]) return
       const landmarks = detections[0].landmarks
@@ -158,12 +127,10 @@ const loopJudge = () => {
         clearInterval(timer)
         isLight.value = false;
       }
-
-
     } catch (error) {
       console.error(error)
     }
-  }, 200);
+  }, 100);
 }
 const initFace = async () => {
   console.log('loadnet初始化')
@@ -187,11 +154,8 @@ onBeforeUnmount(() => {
 watch(() => isLight.value, (newVal, oldVal) => {
   if (!newVal && oldVal) {
     audio.value.play();
-
   }
 })
-
-
 </script>
 
 <style lang="scss">
@@ -229,7 +193,7 @@ watch(() => isLight.value, (newVal, oldVal) => {
     font-size: 40rpx;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     position: absolute;
-    top: 800rpx;
+    top: 900rpx;
     width: 250rpx;
     height: 80rpx;
     line-height: 80rpx;
@@ -247,10 +211,6 @@ watch(() => isLight.value, (newVal, oldVal) => {
     &:active {
       transform: scale(0.95) rotate(10deg);
     }
-
-
-
-
   }
 
 }
