@@ -1,23 +1,26 @@
 <template>
-  <view class="face-marks__cake">
-    <Cake :isLight="isLight" />
-  </view>
-  <view class="face-marks__container">
-    <view class="face-marks__btn" @click="handleReset" v-if="displayText" :style="{
-      transform: isLight ? '' : 'rotate(10deg)',
-      opacity: isLight ? '1' : '0.5',
-      boxShadow: isLight ? '0 4px 8px rgba(0, 0, 0, 0.5)' : ''
-    }">{{ displayText }}</view>
-    <video class="face-marks__video" autoplay muted playsinline controls="false"></video>
+  <view class="container">
+    <view class="face-marks__cake">
+      <Cake :isLight="isLight" />
+    </view>
+    <view class="face-marks__container">
+      <view class="face-marks__btn" @click="handleReset" v-if="displayText" :style="{
+        transform: isLight ? '' : 'rotate(10deg)',
+        opacity: isLight ? '1' : '0.5',
+        boxShadow: isLight ? '0 4px 8px rgba(0, 0, 0, 0.5)' : ''
+      }">{{ displayText }}</view>
+      <video class="face-marks__video" autoplay muted playsinline controls="false"></video>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { ref, onMounted, onBeforeMount, onBeforeUnmount, computed, watch, nextTick } from 'vue'
 import * as faceapi from 'face-api.js'
 import type { Point } from 'face-api.js'
 import audioSrc from '../../../public/music/birthday.mp3'
 import Cake from '../../components/Cake/index.vue'
+import { createConfetti, animateConfetti } from './generateConfetti'
 
 const modelsSrc = './static/models'
 
@@ -141,10 +144,12 @@ const initFace = async () => {
   cam.addEventListener('play', loopJudge);
 }
 
-
 onMounted(() => {
   initFace()
   audio.value = new Audio(audioSrc)
+  nextTick(() => {
+    createConfetti()
+  })
 })
 onBeforeUnmount(() => {
   clearInterval(timer)
@@ -154,16 +159,28 @@ onBeforeUnmount(() => {
 watch(() => isLight.value, (newVal, oldVal) => {
   if (!newVal && oldVal) {
     audio.value.play();
+    nextTick(() => {
+      animateConfetti()
+    })
   }
 })
 </script>
 
 <style lang="scss">
+@import './index.scss';
+
+.container {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  left: 0;
+  top: 0;
+}
+
 .face-marks {
   &__cake {
-    max-width: 1500rpx;
+    position: absolute;
     margin: auto;
-    height: 100vh;
   }
 
   &__container {
@@ -188,11 +205,12 @@ watch(() => isLight.value, (newVal, oldVal) => {
   }
 
   &__btn {
+    z-index: 2000;
     background-color: #45a049;
     color: #fefefe;
     font-size: 40rpx;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    position: absolute;
+    position: relative;
     top: 900rpx;
     width: 250rpx;
     height: 80rpx;
@@ -212,6 +230,5 @@ watch(() => isLight.value, (newVal, oldVal) => {
       transform: scale(0.95) rotate(10deg);
     }
   }
-
 }
 </style>

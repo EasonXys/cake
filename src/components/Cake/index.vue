@@ -7,14 +7,14 @@
       <view class="s2"></view>
       <view class="s1"></view>
     </view>
-    <view class="box" v-if="props.isLight">
+    <view class="box" v-if="isLight">
       <view class="shadow">
       </view>
     </view>
     <view class="cake">
       <view class="candle">
-        <view :class="props.isLight ? 'wick' : 'extinguished'"></view>
-        <view v-if="props.isLight">
+        <view :class="isLight ? 'wick' : 'extinguished'"></view>
+        <view v-if="isLight">
           <view class="light"></view>
           <view class="light"></view>
           <view class="light"></view>
@@ -25,14 +25,13 @@
       <view class="cream"></view>
       <view class="bread"></view>
     </view>
-    <view :class="[props.isLight ? '' : 'blessing']">
+    <view :class="[isLight ? '' : 'blessing']">
       {{ isLight ? '' : '生日快乐' }}
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
-// import { defineProps, ref } from "vue"
 interface IProps {
   isLight: boolean
 }
